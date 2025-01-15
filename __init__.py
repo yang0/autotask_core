@@ -1,4 +1,5 @@
 from .example import *
+from .env import *
 
 VERSION = "1.0.0"
 GIT_URL = "https://github.com/yang0/autotask_core.git"
