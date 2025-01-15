@@ -13,8 +13,8 @@ CONFIG_PATH = str(Path(__file__).parent.parent.parent / "config" / "env.json")
 
 @register_node
 class EnvKeyToValueNode(Node):
-    """Convert environment key to its corresponding value"""
-    NAME = "Environment Key to Value Converter"
+    """Environment key to its corresponding value"""
+    NAME = "Environment Parameters"
     DESCRIPTION = "Convert up to 3 environment keys to their corresponding values"
     
     @staticmethod
@@ -33,21 +33,21 @@ class EnvKeyToValueNode(Node):
     
     INPUTS = {
         "env_key1": {
-            "label": "Environment Key 1",
+            "label": "Key 1",
             "description": "First environment key to convert",
             "type": "COMBO",
             "options": _get_env_keys(),
             "required": True
         },
         "env_key2": {
-            "label": "Environment Key 2",
+            "label": "Key 2",
             "description": "Second environment key to convert",
             "type": "COMBO",
             "options": _get_env_keys(),
             "required": False
         },
         "env_key3": {
-            "label": "Environment Key 3",
+            "label": "Key 3",
             "description": "Third environment key to convert",
             "type": "COMBO",
             "options": _get_env_keys(),
@@ -57,17 +57,17 @@ class EnvKeyToValueNode(Node):
     
     OUTPUTS = {
         "env_value1": {
-            "label": "Environment Value 1",
+            "label": "Value 1",
             "description": "Value for first key",
             "type": "STRING"
         },
         "env_value2": {
-            "label": "Environment Value 2",
+            "label": "Value 2",
             "description": "Value for second key",
             "type": "STRING"
         },
         "env_value3": {
-            "label": "Environment Value 3",
+            "label": "Value 3",
             "description": "Value for third key",
             "type": "STRING"
         }

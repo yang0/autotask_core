@@ -1,38 +1,40 @@
-# Example Plugin
+# AutoTask Core Plugin
 
-This plugin demonstrates three different types of nodes in the workflow system.
+Core plugin for AutoTask that provides essential automation features.
 
 ## Node Types
 
-### 1. ExampleNode
-A basic node that processes string input:
-- Input: Takes a string parameter
-- Output: Returns the input string with success status
-- Use Case: Demonstrates basic node structure and error handling
+### Environment Key to Value Node
+A node that converts environment keys to their corresponding values:
 
-### 2. ExampleGeneratorNode
-A generator node that produces a sequence of numbers:
-- Inputs:
-  - Start Number (default: 0)
-  - End Number (default: 10)
-  - Step Size (default: 1)
-- Output: Generates numbers in sequence
-- Use Case: Useful for batch processing or creating number sequences
+- **Inputs**: 
+  - Environment Key 1 (Required)
+  - Environment Key 2 (Optional)
+  - Environment Key 3 (Optional)
+  - All keys are selected from dropdown list
 
-### 3. ExampleConditionNode
-A conditional node that checks if a number is even:
-- Input: Takes an integer number
-- Outputs: Has two branches
-  - Even Branch (true_branch): Activated when number is even
-  - Odd Branch (false_branch): Activated when number is odd
-- Use Case: Demonstrates workflow branching based on conditions
+- **Outputs**: 
+  - Environment Value 1
+  - Environment Value 2
+  - Environment Value 3
 
-## Running Tests
+- **Features**:
+  - Dynamic loading of environment options
+  - Supports up to 3 key-value conversions
+  - Handles missing values gracefully
+  - Uses relative path for configuration
 
-To run the test cases:
+## Configuration
 
-```bash
-python example.py
+The plugin requires an `env.json` file in the `config` directory with the following structure:
+```json
+[
+  {
+    "key": "ENV_KEY",
+    "value": "env_value",
+    "showValue": true
+  }
+]
 ```
 
-This will execute the test cases and print the results to the console.
+The configuration file is automatically loaded from the relative path: `../config/env.json`
