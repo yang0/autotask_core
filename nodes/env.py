@@ -6,7 +6,7 @@ from pathlib import Path
 try:
     from autotask.nodes import Node, register_node
 except ImportError:
-    from stub import Node, register_node
+    from ..stub import Node, register_node
 
 # 使用相对路径：从当前文件所在目录向上两级找到config目录
 CONFIG_PATH = str(Path(__file__).parent.parent.parent / "config" / "env.json")

@@ -1,4 +1,4 @@
-from typing import Dict, Any, TypeVar, Type, Generator
+from typing import Dict, Any, TypeVar, Type, Generator, List, Optional, Union
 from abc import ABC, abstractmethod
 
 def register_node(cls):
@@ -44,6 +44,8 @@ class GeneratorNode(Node):
         """
         raise NotImplementedError
 
+
+
 class ConditionalNode(Node):
     """Conditional branch node base class for development environment"""
     
@@ -64,3 +66,112 @@ class ConditionalNode(Node):
             str: Name of the active output port
         """
         raise NotImplementedError
+
+
+class VectorStore(ABC):
+    """向量数据库抽象基类"""
+
+    @abstractmethod
+    async def batch_add(
+        self,
+        ids: List[str],
+        embeddings: List[List[float]],
+        documents: List[str],
+        metadatas: Optional[List[Dict[str, Any]]] = None
+    ) -> None:
+        """批量添加文档到向量数据库
+        Args:
+            ids: 文档ID列表
+            embeddings: 文档向量列表
+            documents: 文档内容列表
+            metadatas: 文档元数据列表
+        """
+        pass
+
+    @abstractmethod
+    async def add(
+        self,
+        id: str,
+        embedding: List[float],
+        document: str,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """添加单个文档到向量数据库
+        Args:
+            id: 文档ID
+            embedding: 文档向量
+            document: 文档内容
+            metadata: 文档元数据
+        """
+        pass
+
+    @abstractmethod
+    async def update(
+        self,
+        id: str,
+        embedding: Optional[List[float]] = None,
+        document: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """更新文档
+        Args:
+            id: 文档ID
+            embedding: 新的文档向量
+            document: 新的文档内容
+            metadata: 新的文档元数据
+        """
+        pass
+
+    @abstractmethod
+    async def delete(
+        self,
+        ids: Union[str, List[str]],
+        filter: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """删除文档
+        Args:
+            ids: 单个文档ID或ID列表
+            filter: 基于元数据的过滤条件
+        """
+        pass
+
+    @abstractmethod
+    async def search(
+        self,
+        query_embedding: List[float],
+        limit: int = 10,
+        filter: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """搜索相似向量
+        Args:
+            query_embedding: 查询向量
+            limit: 返回结果数量
+            filter: 基于元数据的过滤条件
+        Returns:
+            List[Dict]: 搜索结果列表，每个结果包含:
+                - id: 文档ID
+                - document: 文档内容
+                - metadata: 文档元数据
+                - score: 相似度分数
+        """
+        pass
+
+    @abstractmethod
+    async def get(
+        self,
+        ids: Optional[Union[str, List[str]]] = None,
+        filter: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """获取文档
+        Args:
+            ids: 单个文档ID或ID列表
+            filter: 基于元数据的过滤条件
+        Returns:
+            List[Dict]: 文档列表，每个文档包含:
+                - id: 文档ID
+                - document: 文档内容
+                - metadata: 文档元数据
+                - embedding: 文档向量
+        """
+        pass
+
