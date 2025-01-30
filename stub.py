@@ -21,6 +21,15 @@ class Node(ABC):
     def is_generator(self) -> bool:
         """Whether this is a generator node"""
         return False
+    
+    @classmethod
+    def get_all_configured_agents(cls) -> List[Dict[str, Any]]:
+        """get all configured agents"""
+        pass
+
+    def run_agent(self, agent_id: str, input_text: str) -> str:
+        """run agent"""
+        pass
 
 class GeneratorNode(Node):
     """Generator node base class for development environment"""
