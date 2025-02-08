@@ -14,9 +14,10 @@ class Node(ABC):
     OUTPUTS: Dict[str, Dict[str, Any]] = {}
     
     @abstractmethod
-    def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> Dict[str, Any]:
+    async def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> Dict[str, Any]:
         raise NotImplementedError
     
+
     @property
     def is_generator(self) -> bool:
         """Whether this is a generator node"""

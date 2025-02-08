@@ -45,10 +45,11 @@ class AgentNode(Node):
         inputs["agent_id"]["options"] = Node.get_all_configured_agents()
         return inputs
 
-    def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> Dict[str, Any]:
+    async def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> Dict[str, Any]:
         try:
             workflow_logger.info("Starting agent processing")
             
+
             agent_id = node_inputs.get("agent_id")
             input_text = node_inputs.get("input_text", "")
             

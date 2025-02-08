@@ -38,3 +38,5 @@ The plugin requires an `env.json` file in the `config` directory with the follow
 ```
 
 The configuration file is automatically loaded from the relative path: `../config/env.json`
+
+AutoTask.dev User Id: NazgSJb5PTeueSxSEGbaxT
