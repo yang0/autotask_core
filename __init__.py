@@ -5,7 +5,7 @@ from .agents.simpleAgent import *
 # from .documentLoader.pdfLoader import *
 # from .documentLoader.sqliteLoader import *
 
-VERSION = "0.0.14"
+VERSION = "0.0.15"
 GIT_URL = "https://github.com/yang0/autotask_core.git"
 NAME = "AutoTask Core"
 DESCRIPTION = """Core plugin for AutoTask that provides essential AI agent features including:
@@ -18,4 +18,4 @@ DESCRIPTION = """Core plugin for AutoTask that provides essential AI agent featu
 
 This plugin serves as a foundation for building AI-powered automation workflows."""
 
-TAGS = ["Agent"]
+TAGS = ["agent"]
