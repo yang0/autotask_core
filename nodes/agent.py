@@ -57,7 +57,7 @@ class AgentNode(Node):
                 raise ValueError("Agent ID is required")
             
             # 使用基类的 run_agent 方法，它会内部处理异步调用
-            output_text = self.run_agent(agent_id, input_text)
+            output_text = await self.run_agent(agent_id, input_text)
             
             workflow_logger.info("Agent processing completed successfully")
             return {"output_text": output_text}

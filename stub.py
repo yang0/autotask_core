@@ -28,7 +28,7 @@ class Node(ABC):
         """get all configured agents"""
         pass
 
-    def run_agent(self, agent_id: str, input_text: str) -> str:
+    async def run_agent(self, agent_id: str, input_text: str) -> str:
         """run agent"""
         pass
 
