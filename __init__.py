@@ -1,6 +1,8 @@
 from .nodes.agent import *
 from .nodes.iteratorNode import *
 from .agents.simpleAgent import *
+from .embedder import *
+from .reader.text_reader import *
 # from .documentLoader.jsonlLoader import *
 # from .documentLoader.largeTextLoader import *
 # from .documentLoader.pdfLoader import *
