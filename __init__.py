@@ -1,8 +1,20 @@
-from .nodes.agent import *
 from .nodes.iteratorNode import *
+from .nodes.agent import *
+from .nodes.duckduckgo import *
+from .nodes.exa import *
+from .nodes.python import *
+from .nodes.baidu import *
+from .nodes.webscraper import *
+from .nodes.data_processor import *
+from .nodes.yfinance import *
+from .nodes.googlecalendar import *
+from .nodes.youtube import *
+
 from .agents.simpleAgent import *
 from .embedder import *
 from .reader.text_reader import *
+
+from .nodes import *
 # from .documentLoader.jsonlLoader import *
 # from .documentLoader.largeTextLoader import *
 # from .documentLoader.pdfLoader import *

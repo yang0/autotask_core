@@ -1,6 +1,6 @@
 from typing import Dict, Any, TypeVar, Type, Generator, List, Optional, Union
 from abc import ABC, abstractmethod
-
+import os
 def register_node(cls):
     """Development environment stub decorator"""
     return cls
@@ -185,3 +185,7 @@ class VectorStore(ABC):
         """
         pass
 
+
+def get_api_key(provider: str, key_name: str) -> str:
+    """获取API密钥"""
+    return os.getenv(key_name)

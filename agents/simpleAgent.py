@@ -16,6 +16,8 @@ class SimpleTextAgent(BaseAgent):
     
     def client(self):
         """获取客户端实例"""
+        print(f"api_key: {self.get_api_key()}")
+        print(f"api_url: {self.get_api_url()}")
         return AsyncOpenAI(
             api_key=self.get_api_key(),
             base_url=self.get_api_url()
@@ -23,7 +25,6 @@ class SimpleTextAgent(BaseAgent):
 
     async def query(self, messages: List[Dict[str, str]], is_stream: bool = False, functions: List[Dict[str, Any]] = None) -> Any:
         """执行查询"""
-        functions = self.get_tools_as_functions()
         
         response = await self.client().chat.completions.create(
             model=self.get_llm_name(),
