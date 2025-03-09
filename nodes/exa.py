@@ -23,7 +23,7 @@ default_logger.info("[DEBUG-EXA] 准备获取API密钥")
 
     
     
-EXA_API_KEY = get_api_key(provider="eva.ai", key_name="EXA_API_KEY")
+EXA_API_KEY = get_api_key(provider="exa.ai", key_name="EXA_API_KEY")
 
 
 @register_node
@@ -116,7 +116,7 @@ class ExaSearchNode(Node):
             start_time = time.time()
             
             # 创建Exa客户端
-            exa_client = Exa()
+            exa_client = Exa(EXA_API_KEY)
             
             # 执行搜索
             search_kwargs = {
