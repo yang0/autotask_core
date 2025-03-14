@@ -9,7 +9,7 @@ from .nodes.data_processor import *
 from .nodes.yfinance import *
 from .nodes.googlecalendar import *
 from .nodes.youtube import *
-
+from .nodes.time import *
 from .agents.simpleAgent import *
 from .embedder import *
 from .reader.text_reader import *
@@ -20,7 +20,7 @@ from .nodes import *
 # from .documentLoader.pdfLoader import *
 # from .documentLoader.sqliteLoader import *
 
-VERSION = "0.0.43"
+VERSION = "0.0.44"
 GIT_URL = "https://github.com/yang0/autotask_core.git"
 NAME = "AutoTask Core"
 DESCRIPTION = """Core plugin for AutoTask that provides essential AI agent features including:

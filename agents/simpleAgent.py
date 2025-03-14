@@ -3,39 +3,42 @@ from loguru import logger
 from autotask.agent.agentRegistry import AgentRegistry
 from autotask.agent.agentType import (
     BaseAgent, 
-    AgentContext
 )
+from autotask.models.message import Message
 from openai import AsyncOpenAI
 
 @AgentRegistry.register_agent
 class SimpleTextAgent(BaseAgent):
     """简单文本处理Agent"""
-    NAME = "Simple Text Agent"
+    NAME = "Simple Agent"
     DESCRIPTION = "处理基本的文本交互，支持多种LLM模型"
 
-    
-    def client(self):
-        """获取客户端实例"""
-        print(f"api_key: {self.get_api_key()}")
-        print(f"api_url: {self.get_api_url()}")
-        return AsyncOpenAI(
-            api_key=self.get_api_key(),
-            base_url=self.get_api_url()
-        )
+    async def query(self, messages: List[Message], stream: bool = False) -> Any:
+        """执行查询
+        
+        Args:
+            messages: 消息列表
+            stream: 是否使用流式响应
+            
+        Returns:
+            流式模式: AsyncGenerator yielding response chunks
+            非流式模式: Complete response
+        """        
+        
+        # 根据stream参数选择合适的调用方式
+        if stream:
+            return self.main_llm.aresponse_stream(messages)
+        else:
+            return self.main_llm.aresponse(messages)
 
-    async def query(self, messages: List[Dict[str, str]], is_stream: bool = False, functions: List[Dict[str, Any]] = None) -> Any:
-        """执行查询"""
-        
-        response = await self.client().chat.completions.create(
-            model=self.get_llm_name(),
-            messages=messages,
-            functions=functions,
-            function_call="auto" if functions else None,
-            temperature=0.7,
-            max_tokens=1000,
-            stream=is_stream
-        )
-        
-        if is_stream:
-            return response  # 返回异步生成器
-        return response     # 返回完整响应
+    # 确保调用父类的process_model_response_stream方法
+    async def process_model_response_stream(self, response_stream, assistant_message, check_interrupt=None, full_response=""):
+        """调用父类的流式响应处理方法"""
+        async for chunk in super().process_model_response_stream(
+            response_stream=response_stream,
+            assistant_message=assistant_message,
+            check_interrupt=check_interrupt,
+            full_response=full_response
+        ):
+            yield chunk
+
