@@ -10,9 +10,10 @@ from .nodes.yfinance import *
 from .nodes.googlecalendar import *
 from .nodes.youtube import *
 from .nodes.time import *
-from .agents.simpleAgent import *
+from .assistants.simpleAgent import *
 from .embedder import *
 from .reader.text_reader import *
+from .assistants.default_assistant import *
 
 from .nodes import *
 # from .documentLoader.jsonlLoader import *
