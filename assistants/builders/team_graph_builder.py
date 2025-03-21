@@ -26,6 +26,9 @@ class TeamGraphBuilder(BaseGraphBuilder):
     # 定义Nodes
     async def team_supervisor_node(self, state: State):
         """团队主管节点，决定下一步路由到哪个团队成员或结束任务"""
+        if state.should_stop:
+            goto = "__end__"
+            return Command(goto=goto, update={"next": goto})
         # 获取团队成员信息
         assistant_registry = AssistantRegistry.get_instance()
         team_info = []
@@ -110,6 +113,9 @@ class TeamGraphBuilder(BaseGraphBuilder):
 
     async def team_member_node(self, member_name: str, state: State):
         """团队成员节点处理函数"""
+        if state.should_stop:
+            goto = "__end__"
+            return Command(goto=goto, update={"next": goto})
         member = None
         for m in self.get_team_members():
             if m.name == member_name:

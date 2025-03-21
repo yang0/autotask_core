@@ -19,7 +19,6 @@ class AgentNode(Node):
             "label": "Agent",
             "description": "Select the agent to process the input",
             "type": "AGENT",
-            "options": Node.get_all_configured_agents(),
             "required": True
         },
         "input_text": {

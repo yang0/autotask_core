@@ -8,7 +8,7 @@ import traceback
 from dataclasses import dataclass
 from typing import Dict, Any, List, Optional, Literal, Union, TypedDict, cast
 from langgraph.checkpoint.memory import MemorySaver
-from langchain_core.messages import HumanMessage, BaseMessage, SystemMessage
+from langchain_core.messages import HumanMessage, BaseMessage, SystemMessage, AIMessage
 from langgraph.types import Command
 from typing_extensions import TypedDict
 
@@ -49,12 +49,16 @@ class DefaultAssistant(GraphAssistant):
         
     async def main_agent_node(self, state: State):
         """主agent节点处理函数"""
-        messages = [SystemMessage(content=self.reasoning_agent_config.system_message)] + state.messages
+        if state.should_stop:
+            return {"messages": [AIMessage(content="task is stopped by user")]}
+        messages = [SystemMessage(content=self.main_agent_config.system_message)] + state.messages
         response = await self.main_llm.ainvoke(messages)
         return {"messages": [response]}
         
     async def reasoning_agent_node(self, state: State):
         """推理agent节点处理函数"""
+        if state.should_stop:
+            return {"messages": [AIMessage(content="task is stopped by user")]}
         messages = [SystemMessage(content=self.reasoning_agent_config.system_message)] + state.messages
         response = await self.reasoning_llm.ainvoke(messages)
         return {"messages": [response]}
