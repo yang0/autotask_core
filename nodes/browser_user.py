@@ -12,7 +12,9 @@ from langchain_openai import ChatOpenAI
 from browser_use import Agent
 import asyncio
 
-
+API_KEY = get_api_key(provider="browser_use", key_name="API_KEY")
+MODEL = get_api_key(provider="browser_use", key_name="MODEL")
+BASE_URL = get_api_key(provider="browser_use", key_name="BASE_URL")
 
 
 @register_node
@@ -27,25 +29,12 @@ class BrowserUserNode(Node):
             "type": "STRING",
             "required": True,
         },
-        "model": {
-            "label": "LLM Model",
-            "description": "The language model to use (e.g. gpt-4, gpt-3.5-turbo)",
-            "type": "STRING",
-            "default": "deepseek-chat",
-            "required": True,
-        },
-        "base_url": {
-            "label": "API Base URL",
-            "description": "The base URL for API requests",
-            "type": "STRING",
-            "default": "https://api.deepseek.com/v1",
-            "required": True,
-        },
-        "api_key": {
-            "label": "API Key",
-            "description": "The API key for authentication",
-            "type": "STRING",
-            "required": True,
+        "use_vision": {
+            "label": "Use Vision",
+            "description": "Whether to use vision",
+            "type": "BOOLEAN",
+            "default": False,
+            "required": False,
         },
         "temperature": {
             "label": "Temperature",
@@ -73,27 +62,24 @@ class BrowserUserNode(Node):
         try:
             # Get input parameters
             task = node_inputs["task"]
-            model = node_inputs.get("model", "deepseek-chat")
-            base_url = node_inputs.get("base_url", "https://api.deepseek.com/v1")
-            api_key = node_inputs.get("api_key", "sk-21cd4714e35c4528aeb413834f72401d")
             temperature = node_inputs.get("temperature", 0.7)
+            use_vision = node_inputs.get("use_vision", False)
 
             workflow_logger.info(f"Starting browser task: {task}")
-            workflow_logger.info(f"Using model: {model}")
 
             # Create LLM instance
             llm = ChatOpenAI(
-                api_key=api_key,
-                model=model,
+                api_key=API_KEY,
+                model=MODEL,
                 temperature=temperature,
-                base_url=base_url
+                base_url=BASE_URL
             )
 
             # 创建并运行代理
             agent = Agent(
                 task=task,
                 llm=llm,
-                use_vision=False
+                use_vision=use_vision
             )
 
             # 执行任务
@@ -113,7 +99,7 @@ class BrowserUserNode(Node):
             workflow_logger.error(error_msg)
             return {
                 "success": False,
-                "error_message": error_msg
+                "result": error_msg
             }
 
     def cleanup(self):
