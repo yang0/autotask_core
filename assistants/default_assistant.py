@@ -39,9 +39,10 @@ class DefaultAssistant(GraphAssistant):
                  max_steps: int = 5,
                  team: List[str] = None,
                  config: Dict[str, Any] = None,
-                 class_path: str = ""):
+                 class_path: str = "",
+                 knowledge_bases: Optional[List[Dict[str, Any]]] = None):
         super().__init__(id, name, description, main_agent_config, reasoning_agent_config, 
-                        enable_reasoning, max_steps, team, config, class_path)
+                        enable_reasoning, max_steps, team, config, class_path, knowledge_bases)
         
         # 初始化LLM配置
         self.main_llm_config = main_agent_config
@@ -52,6 +53,7 @@ class DefaultAssistant(GraphAssistant):
         if state.should_stop:
             return {"messages": [AIMessage(content="task is stopped by user")]}
         messages = [SystemMessage(content=self.main_agent_config.system_message)] + state.messages
+        messages = self.trunc_messages(messages)  # 添加这行来截断消息        
         response = await self.main_llm.ainvoke(messages)
         return {"messages": [response]}
         
@@ -60,6 +62,7 @@ class DefaultAssistant(GraphAssistant):
         if state.should_stop:
             return {"messages": [AIMessage(content="task is stopped by user")]}
         messages = [SystemMessage(content=self.reasoning_agent_config.system_message)] + state.messages
+        messages = self.trunc_messages(messages)  # 添加这行来截断消息        
         response = await self.reasoning_llm.ainvoke(messages)
         return {"messages": [response]}
 

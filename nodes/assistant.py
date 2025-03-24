@@ -5,6 +5,7 @@ from pathlib import Path
 try:
     from autotask.nodes import Node, register_node
     from autotask.assistant.assistant_manager import run_assistant_sync
+    from autotask.assistant.assistant_config import assistant_config_manager
 except ImportError:
     from ..stub import Node, register_node
 
@@ -22,6 +23,7 @@ class AssistantNode(Node):
             "description": "Select the assistant to process the input",
             "type": "ASSISTANT",
             "required": True,
+            "options": assistant_config_manager.get_hierarchical_assistant_configs(),
         },
         "input_text": {
             "label": "Input Text",
@@ -59,7 +61,7 @@ class AssistantNode(Node):
                 raise ValueError("Assistant ID is required")
 
             # 使用基类的 run_assistant 方法，它会内部处理异步调用
-            output_text = await run_assistant_sync(assistant_id, input_text)
+            output_text = await run_assistant_sync(input_text, assistant_id)
 
             workflow_logger.info("Assistant processing completed successfully")
             return {"output_text": output_text}

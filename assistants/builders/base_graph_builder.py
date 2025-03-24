@@ -10,10 +10,8 @@ logger = logging.getLogger(__name__)
 
 class BaseGraphBuilder(ABC):
     def __init__(self, assistant):
-        self.assistant = assistant
-        
-    
-        
+        self.assistant = assistant        
+
     @abstractmethod
     def add_nodes(self, graph_builder: StateGraph) -> None:
         """添加节点到图中"""
