@@ -11,7 +11,7 @@ from typing import Dict, Any
 from langchain_openai import ChatOpenAI
 from browser_use import Agent
 import asyncio
-
+import traceback
 API_KEY = get_api_key(provider="browser_use", key_name="API_KEY")
 MODEL = get_api_key(provider="browser_use", key_name="MODEL")
 BASE_URL = get_api_key(provider="browser_use", key_name="BASE_URL")
@@ -21,6 +21,9 @@ BASE_URL = get_api_key(provider="browser_use", key_name="BASE_URL")
 class BrowserUserNode(Node):
     NAME = "Browser User"
     DESCRIPTION = "Execute browser automation tasks using LLM agent"
+
+    # 添加类变量
+    _agent = None
 
     INPUTS = {
         "task": {
@@ -76,14 +79,14 @@ class BrowserUserNode(Node):
             )
 
             # 创建并运行代理
-            agent = Agent(
+            BrowserUserNode._agent = Agent(
                 task=task,
                 llm=llm,
                 use_vision=use_vision
             )
 
             # 执行任务
-            response = await agent.run()
+            response = await BrowserUserNode._agent.run()
 
             workflow_logger.info("Browser task completed successfully")
             
@@ -102,10 +105,18 @@ class BrowserUserNode(Node):
                 "result": error_msg
             }
 
+    async def stop(self) -> None:
+        """Stop the browser agent when interrupted"""
+        try:
+            if BrowserUserNode._agent:
+                BrowserUserNode._agent.stop()
+        except Exception as e:
+            traceback.print_exc()
+
     def cleanup(self):
         """清理资源"""
         try:
             # 在这里添加任何需要的清理代码
-            pass
+            BrowserUserNode._agent = None
         except Exception as e:
-            self.workflow_logger.error(f"Cleanup failed: {str(e)}")
+            traceback.print_exc()

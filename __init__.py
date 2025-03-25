@@ -1,5 +1,5 @@
-# from .nodes.iteratorNode import *
-# from .nodes.assistant import *
+from .nodes.iteratorNode import *
+from .nodes.assistant import *
 # from .nodes.duckduckgo import *
 # from .nodes.exa import *
 # from .nodes.python import *

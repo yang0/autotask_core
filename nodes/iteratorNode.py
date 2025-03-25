@@ -4,12 +4,12 @@ from autotask.nodes import GeneratorNode, register_node
 @register_node
 class IteratorNode(GeneratorNode):
     NAME = "Iterator"
-    DESCRIPTION = "Iterate through arrays, sets, or other iterable objects and yield elements"
+    DESCRIPTION = "Iterate through arrays, sets, other iterable objects, or strings (split by newlines) and yield elements"
     
     INPUTS = {
         "iterable": {
             "label": "Iterable Object",
-            "description": "Array, set, or other iterable object to iterate through",
+            "description": "Array, set, string (split by newlines), or other iterable object to iterate through",
             "type": "",
             "required": True,
             "default": []
@@ -39,8 +39,13 @@ class IteratorNode(GeneratorNode):
             iterable = node_inputs["iterable"]
             skip_none = node_inputs.get("skip_none", True)
             
+            # Handle string input by splitting on newlines
+            if isinstance(iterable, str):
+                log.info("Processing string input by splitting on newlines")
+                iterable = iterable.splitlines()
+            
             if not isinstance(iterable, (list, set, dict, tuple, Iterable)):
-                log.error(f"Input must be iterable, got: {type(iterable)}")
+                log.error(f"Input must be iterable or string, got: {type(iterable)}")
                 return
             
             log.info(f"Starting iteration of type: {type(iterable).__name__}")
