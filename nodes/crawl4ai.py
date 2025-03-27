@@ -1,7 +1,9 @@
+import traceback
 try:
     from autotask.nodes import Node, GeneratorNode, register_node
     from crawl4ai import AsyncWebCrawler, CacheMode
 except ImportError:
+    traceback.print_exc()
     # Mock for development environment
     from stub import Node, GeneratorNode, register_node
     class AsyncWebCrawler:
@@ -19,11 +21,22 @@ except ImportError:
 import asyncio
 from typing import Dict, Any, Generator, List, Optional
 
+class BaseCrawlerNode:
+    """Base class for all crawler nodes"""
+    _crawler_instance = None
+    _crawler_lock = asyncio.Lock()
 
-
+    @classmethod
+    async def get_crawler(cls):
+        """获取或创建 AsyncWebCrawler 实例"""
+        async with cls._crawler_lock:
+            if cls._crawler_instance is None:
+                cls._crawler_instance = AsyncWebCrawler(thread_safe=True)
+                await cls._crawler_instance.start()
+            return cls._crawler_instance
 
 @register_node
-class WebCrawlerNode(Node):
+class WebCrawlerNode(Node, BaseCrawlerNode):
     """Node for crawling a single web page using crawl4ai library"""
     NAME = "Web Crawler"
     DESCRIPTION = "Crawls a website and extracts its content using crawl4ai"
@@ -67,6 +80,10 @@ class WebCrawlerNode(Node):
             "type": "STRING",
         }
     }
+
+    def __init__(self):
+        Node.__init__(self)
+        BaseCrawlerNode.__init__(self)
     
     async def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> Dict[str, Any]:
         try:
@@ -84,35 +101,30 @@ class WebCrawlerNode(Node):
             
             workflow_logger.info(f"Starting web crawling for: {url}")
             
-            # Determine cache mode
-            cache_mode = CacheMode.BYPASS if not use_cache else None
+
+            crawler = await self.get_crawler()
+            result = await crawler.arun(url=url, cache_mode=CacheMode.BYPASS if not use_cache else None)
             
-            # Use AsyncWebCrawler directly
-            async with AsyncWebCrawler(thread_safe=True) as crawler:
-                result = await crawler.arun(url=url, cache_mode=cache_mode)
-                
-                if not result.markdown:
-                    workflow_logger.warning(f"No content found for {url}")
-                    return {
-                        "success": True,
-                        "content": "",
-                        "error_message": "No content found"
-                    }
-                
-                # Process the content
-                content = result.markdown
-                if max_length:
-                    content = content[:max_length]
-                
-                workflow_logger.info(f"Successfully crawled {url}")
-                
+            if not result.markdown:
+                workflow_logger.warning(f"No content found for {url}")
                 return {
                     "success": True,
-                    "content": content,
-                    "error_message": ""
+                    "content": "",
+                    "error_message": "No content found"
                 }
             
+            content = result.markdown
+            if max_length:
+                content = content[:max_length]
+            
+            return {
+                "success": True,
+                "content": content,
+                "error_message": ""
+            }
+                
         except Exception as e:
+            traceback.print_exc()
             error_msg = f"Web crawling failed: {str(e)}"
             workflow_logger.error(error_msg)
             return {
@@ -123,7 +135,7 @@ class WebCrawlerNode(Node):
 
 
 @register_node
-class MultiWebCrawlerNode(GeneratorNode):
+class MultiWebCrawlerNode(GeneratorNode, BaseCrawlerNode):
     """Generator node for crawling multiple web pages sequentially"""
     NAME = "Multi URL Crawler"
     DESCRIPTION = "Crawls multiple websites sequentially and yields their content one by one"
@@ -172,6 +184,10 @@ class MultiWebCrawlerNode(GeneratorNode):
             "type": "STRING",
         }
     }
+
+    def __init__(self):
+        GeneratorNode.__init__(self)
+        BaseCrawlerNode.__init__(self)
     
     def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> Generator:
         try:
@@ -240,22 +256,23 @@ class MultiWebCrawlerNode(GeneratorNode):
     
     async def _crawl_url(self, url: str, max_length: Optional[int], cache_mode) -> str:
         """Helper method to crawl a single URL asynchronously"""
-        async with AsyncWebCrawler(thread_safe=True) as crawler:
-            result = await crawler.arun(url=url, cache_mode=cache_mode)
+        crawler = await self.get_crawler()
+        result = await crawler.arun(url=url, cache_mode=cache_mode)
+        
+        if not result.markdown:
+            return ""
+        
+        # Process the content
+        content = result.markdown
+        if max_length:
+            content = content[:max_length]
             
-            if not result.markdown:
-                return ""
-            
-            # Process the content
-            content = result.markdown
-            if max_length:
-                content = content[:max_length]
-                
-            return content
+        return content
+
 
 
 @register_node
-class SearchEngineCrawlerNode(Node):
+class SearchEngineCrawlerNode(Node, BaseCrawlerNode):
     """Node for searching and crawling search results"""
     NAME = "Search Engine Crawler"
     DESCRIPTION = "Performs a search query and crawls the top results"
@@ -306,6 +323,10 @@ class SearchEngineCrawlerNode(Node):
             "type": "STRING",
         }
     }
+
+    def __init__(self):
+        Node.__init__(self)
+        BaseCrawlerNode.__init__(self)
     
     async def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> Dict[str, Any]:
         try:
@@ -331,30 +352,31 @@ class SearchEngineCrawlerNode(Node):
             # Determine cache mode
             cache_mode = CacheMode.BYPASS if not use_cache else None
             
-            # Use AsyncWebCrawler directly
-            async with AsyncWebCrawler(thread_safe=True) as crawler:
-                search_result = await crawler.arun(url=search_url, cache_mode=cache_mode)
-                
-                # In a real implementation, you would parse the search results 
-                # and crawl each result URL
-                search_content = ""
-                if search_result.markdown:
-                    search_content = search_result.markdown[:max_length] if max_length else search_result.markdown
-                
-                # Mock result for demonstration
-                results = [{
-                    "url": search_url,
-                    "title": f"Search results for: {query}",
-                    "content": search_content
-                }]
-                
-                workflow_logger.info(f"Successfully performed search and crawling for query: {query}")
-                
-                return {
-                    "success": True,
-                    "results": results,
-                    "error_message": ""
-                }
+
+            crawler = await self.get_crawler()
+            search_result = await crawler.arun(url=search_url, cache_mode=cache_mode)
+            
+            # In a real implementation, you would parse the search results 
+            # and crawl each result URL
+            search_content = ""
+            if search_result.markdown:
+                search_content = search_result.markdown[:max_length] if max_length else search_result.markdown
+            
+            # Mock result for demonstration
+            results = [{
+                "url": search_url,
+                "title": f"Search results for: {query}",
+                "content": search_content
+            }]
+            
+            workflow_logger.info(f"Successfully performed search and crawling for query: {query}")
+            
+            return {
+                "success": True,
+                "results": results,
+                "error_message": ""
+            }
+
             
         except Exception as e:
             error_msg = f"Search engine crawling failed: {str(e)}"

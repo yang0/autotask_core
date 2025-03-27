@@ -9,9 +9,13 @@ except ImportError:
 
 from typing import Dict, Any
 from langchain_openai import ChatOpenAI
-from browser_use import Agent
-import asyncio
+from browser_use import Agent, BrowserContextConfig, Browser
+from browser_use.browser.context import BrowserContext
 import traceback
+import json
+import tempfile
+
+
 API_KEY = get_api_key(provider="browser_use", key_name="API_KEY")
 MODEL = get_api_key(provider="browser_use", key_name="MODEL")
 BASE_URL = get_api_key(provider="browser_use", key_name="BASE_URL")
@@ -24,6 +28,7 @@ class BrowserUserNode(Node):
 
     # 添加类变量
     _agent = None
+    _temp_cookie_file = None
 
     INPUTS = {
         "task": {
@@ -31,6 +36,12 @@ class BrowserUserNode(Node):
             "description": "The task to be performed by the browser agent",
             "type": "STRING",
             "required": True,
+        },
+        "cookie_file": {
+            "label": "Cookie File",
+            "description": "Path to the cookie file for browser authentication",
+            "type": "STRING",
+            "required": False,
         },
         "use_vision": {
             "label": "Use Vision",
@@ -61,10 +72,48 @@ class BrowserUserNode(Node):
         }
     }
 
+    def _process_cookie_file(self, cookie_file: str) -> str:
+        """Process the cookie file and extract cookies if needed.
+        
+        Args:
+            cookie_file: Path to the original cookie file
+            
+        Returns:
+            str: Path to the processed cookie file
+        """
+        try:
+            if not cookie_file or not os.path.exists(cookie_file):
+                return None
+
+            with open(cookie_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                
+            if not isinstance(data, dict) or 'cookies' not in data:
+                return cookie_file
+                
+            cookies_data = data['cookies']
+            if not isinstance(cookies_data, list):
+                return cookie_file
+
+            # Create a temporary file for the cookies
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.json')
+            self._temp_cookie_file = temp_file.name
+            
+            # Write the cookies array directly to the temporary file
+            with open(temp_file.name, 'w', encoding='utf-8') as f:
+                json.dump(cookies_data, f, indent=2)
+                
+            return temp_file.name
+                
+        except Exception as e:
+            self.workflow_logger.error(f"Error processing cookie file: {str(e)}")
+            return cookie_file
+
     async def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> Dict[str, Any]:
         try:
             # Get input parameters
             task = node_inputs["task"]
+            cookie_file = node_inputs.get("cookie_file")
             temperature = node_inputs.get("temperature", 0.7)
             use_vision = node_inputs.get("use_vision", False)
 
@@ -77,12 +126,31 @@ class BrowserUserNode(Node):
                 temperature=temperature,
                 base_url=BASE_URL
             )
+            
+            config = BrowserContextConfig(
+                        maximum_wait_page_load_time=15.0,
+                    )
+            
+            if cookie_file and os.path.exists(cookie_file):
+                workflow_logger.info(f"Using cookie file: {cookie_file}")
+                # Process the cookie file
+                processed_cookie_file = self._process_cookie_file(cookie_file)
+                workflow_logger.info(f"Using processed cookie file: {processed_cookie_file}")
+                
+                if processed_cookie_file:
+                    config = BrowserContextConfig(
+                        maximum_wait_page_load_time=15.0,
+                        cookies_file=processed_cookie_file,
+                    )
+                    
+            context = BrowserContext(browser=Browser(), config=config)
 
             # 创建并运行代理
             BrowserUserNode._agent = Agent(
                 task=task,
                 llm=llm,
-                use_vision=use_vision
+                use_vision=use_vision,
+                browser_context=context
             )
 
             # 执行任务
@@ -90,8 +158,6 @@ class BrowserUserNode(Node):
 
             workflow_logger.info("Browser task completed successfully")
             
-            
-
             return {
                 "success": True,
                 "result": response.final_result()
@@ -104,6 +170,14 @@ class BrowserUserNode(Node):
                 "success": False,
                 "result": error_msg
             }
+        finally:
+            # Cleanup temporary cookie file if it exists
+            if self._temp_cookie_file and os.path.exists(self._temp_cookie_file):
+                try:
+                    os.unlink(self._temp_cookie_file)
+                    self._temp_cookie_file = None
+                except Exception as e:
+                    workflow_logger.error(f"Error cleaning up temporary cookie file: {str(e)}")
 
     async def stop(self) -> None:
         """Stop the browser agent when interrupted"""
@@ -116,6 +190,10 @@ class BrowserUserNode(Node):
     def cleanup(self):
         """清理资源"""
         try:
+            # Clean up temporary cookie file if it exists
+            if self._temp_cookie_file and os.path.exists(self._temp_cookie_file):
+                os.unlink(self._temp_cookie_file)
+                self._temp_cookie_file = None
             # 在这里添加任何需要的清理代码
             BrowserUserNode._agent = None
         except Exception as e:
