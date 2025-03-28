@@ -175,12 +175,10 @@ def parse_cookie_json(json_file):
                 ct0 = cookie.get('value')
         
         if not auth_token or not ct0:
-            print("Error: Missing required cookies (auth_token or ct0) in JSON file")
             return None, None
             
         return f"auth_token={auth_token}; ct0={ct0};", ct0
-    except Exception as e:
-        print(f"Error reading cookie JSON file: {e}")
+    except Exception:
         return None, None
 
 def stamp2time(msecs_stamp:int) -> str:
@@ -222,8 +220,6 @@ def get_user_info(_user_info, _headers):
         _user_info.statuses_count = raw_data['data']['user']['result']['legacy']['statuses_count']
         _user_info.media_count = raw_data['data']['user']['result']['legacy']['media_count']
     except Exception:
-        print('获取信息失败')
-        print(response)
         return False
     return True
 
@@ -255,18 +251,14 @@ def get_heighest_video_quality(variants) -> str:
     return heighest_url
 
 def sanitize_filename(filename: str) -> str:
-    """替换文件名中的非法字符为下划线"""
-    print(f"清理文件名前的原始文件名: {filename}")
-    # 替换空格、冒号、斜杠等特殊字符为下划线
-    invalid_chars = r'[<>:"/\\|?*\s]'  # 添加 \s 来匹配所有空白字符
+    """Replace invalid characters in filename with underscores"""
+    # Replace spaces, colons, slashes and other special characters with underscores
+    invalid_chars = r'[<>:"/\\|?*\s]'  # Add \s to match all whitespace characters
     filename = re.sub(invalid_chars, '_', filename)
-    print(f"替换非法字符后: {filename}")
-    # 替换连续的下划线为单个下划线
+    # Replace consecutive underscores with a single underscore
     filename = re.sub(r'_+', '_', filename)
-    print(f"替换连续下划线后: {filename}")
-    # 移除开头和结尾的下划线
+    # Remove leading and trailing underscores
     filename = filename.strip('_')
-    print(f"清理前后下划线后: {filename}")
     return filename
 
 async def download_media(url: str, save_path: str, filename: str, is_video: bool = False):
@@ -276,27 +268,19 @@ async def download_media(url: str, save_path: str, filename: str, is_video: bool
             if response.status_code == 404:
                 raise Exception('404')
             
-            print(f"\n开始处理媒体文件:")
-            print(f"原始文件名: {filename}")
-            # 先清理文件名
             filename = sanitize_filename(filename)
-            print(f"清理后的文件名: {filename}")
             
             if is_video:
                 filename = f'{filename}.mp4'
             else:
                 filename = f'{filename}.jpg'
-            print(f"添加扩展名后的最终文件名: {filename}")
                 
             full_path = os.path.join(save_path, filename)
-            print(f"完整文件路径: {full_path}")
             
             with open(full_path, 'wb') as f:
                 f.write(response.content)
             return filename
-    except Exception as e:
-        print(f"下载失败: {url}")
-        print(f"错误: {e}")
+    except Exception:
         return None
 
 def generate_markdown(tweet_folder: str, tweet_data: dict, media_files: list):
@@ -440,14 +424,10 @@ async def process_tweet(tweet_data, user_info, save_path, semaphore, headers):
         display_name = tweet_data['core']['user_results']['result']['legacy']['name']
         screen_name = tweet_data['core']['user_results']['result']['legacy']['screen_name']
         
-        print(f"\n处理推文 {tweet_id}:")
-        print(f"显示名称: {display_name}")
-        print(f"用户名: {screen_name}")
-        
         # Create CSV file for this tweet
         csv_file = TweetCSV(save_path, tweet_id, display_name, screen_name)
         
-        # 准备推文数据用于生成Markdown
+        # Prepare tweet data for Markdown
         tweet_info = {
             'display_name': display_name,
             'screen_name': screen_name,
@@ -493,13 +473,13 @@ async def process_tweet(tweet_data, user_info, save_path, semaphore, headers):
                 # Write to CSV
                 csv_file.write_tweet(tweet_info_csv)
         
-        # 获取自己的回复
+        # Get self replies
         self_replies = await get_self_replies(tweet_id, user_info.rest_id, headers)
         for reply in self_replies:
             reply_msecs = int(reply['edit_control']['editable_until_msecs']) - 3600000
             reply_text = reply['legacy']['full_text']
             
-            # 处理回复中的媒体
+            # Process media in replies
             if 'extended_entities' in reply['legacy']:
                 media_list = reply['legacy']['extended_entities']['media']
                 for media in media_list:
@@ -535,21 +515,20 @@ async def process_tweet(tweet_data, user_info, save_path, semaphore, headers):
         
         csv_file.close()
         
-        # 生成Markdown文件
+        # Generate Markdown file
         generate_markdown(csv_file.tweet_folder, tweet_info, media_files)
         
         return True
-    except Exception as e:
-        print(f"处理推文失败: {e}")
+    except Exception:
         return False
 
 async def download_tweets(user_info, save_path, max_tweets, headers):
-    semaphore = asyncio.Semaphore(8)  # 限制并发数
+    semaphore = asyncio.Semaphore(8)  # Limit concurrent downloads
     cursor = ''
     processed_count = 0
     
     while processed_count < max_tweets:
-        # 修改 features 参数，确保所有必需的特性都有值
+        # Set required features
         features = {
             "rweb_tipjar_consumption_enabled": True,
             "responsive_web_graphql_exclude_directive_enabled": True,
@@ -591,53 +570,31 @@ async def download_tweets(user_info, save_path, max_tweets, headers):
         url = f'https://twitter.com/i/api/graphql/9zyyd1hebl7oNWIPdA8HRw/UserTweets?variables={json.dumps(variables)}&features={json.dumps(features)}'
         
         try:
-            print(f"正在获取推文，cursor: {cursor}")
             response = httpx.get(quote_url(url), headers=headers).text
-            print(f"API响应: {response[:200]}...")  # 打印响应前200个字符
-            
             raw_data = json.loads(response)
             
-            # 检查错误信息
-            if 'errors' in raw_data:
-                print(f"API返回错误: {raw_data['errors']}")
+            # Check for errors
+            if 'errors' in raw_data or 'data' not in raw_data:
                 break
                 
-            if 'data' not in raw_data:
-                print(f"API响应中没有data字段: {raw_data}")
-                break
-                
-            if 'user' not in raw_data['data']:
-                print(f"API响应中没有user字段: {raw_data['data']}")
-                break
-                
-            if 'result' not in raw_data['data']['user']:
-                print(f"API响应中没有result字段: {raw_data['data']['user']}")
+            if 'user' not in raw_data['data'] or 'result' not in raw_data['data']['user']:
                 break
                 
             if 'timeline_v2' not in raw_data['data']['user']['result']:
-                print(f"API响应中没有timeline_v2字段: {raw_data['data']['user']['result']}")
                 break
                 
             if 'timeline' not in raw_data['data']['user']['result']['timeline_v2']:
-                print(f"API响应中没有timeline字段: {raw_data['data']['user']['result']['timeline_v2']}")
                 break
                 
             if 'instructions' not in raw_data['data']['user']['result']['timeline_v2']['timeline']:
-                print(f"API响应中没有instructions字段: {raw_data['data']['user']['result']['timeline_v2']['timeline']}")
                 break
                 
             instructions = raw_data['data']['user']['result']['timeline_v2']['timeline']['instructions']
             if not instructions:
-                print("API响应中instructions为空")
                 break
                 
             entries = instructions[-1].get('entries', [])
-            if not entries:
-                print("API响应中没有entries")
-                break
-                
-            if len(entries) <= 2:  # No more tweets
-                print("没有更多推文")
+            if not entries or len(entries) <= 2:  # No more tweets
                 break
                 
             # Update cursor
@@ -657,41 +614,32 @@ async def download_tweets(user_info, save_path, max_tweets, headers):
                     processed_count += 1
             
             if tasks:
-                results = await asyncio.gather(*tasks)
-                success_count = sum(1 for r in results if r)
-                print(f"已处理 {success_count}/{max_tweets} 条推文")
+                await asyncio.gather(*tasks)
             
-            # 如果已经处理完需要的推文数量，就退出循环
+            # Exit if we've processed enough tweets
             if processed_count >= max_tweets:
                 break
             
-        except json.JSONDecodeError as e:
-            print(f"JSON解析错误: {e}")
-            print(f"响应内容: {response[:500]}...")  # 打印响应前500个字符
-            break
-        except Exception as e:
-            print(f"获取推文失败: {e}")
-            print(f"响应内容: {response[:500]}...")  # 打印响应前500个字符
+        except Exception:
             break
 
 def main():
-    # 参数设置
-    screen_name = ""  # 用户名
-    cookie_file = ""  # cookie文件路径
-    max_tweets = 10  # 最大推文数
+    # Set parameters
+    screen_name = ""  # Username
+    cookie_file = ""  # Cookie file path
+    max_tweets = 10   # Maximum tweets to process
     
-    # 创建保存目录
+    # Create save directory
     save_path = os.path.join(os.getcwd(), screen_name)
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     
-    # 读取cookie
+    # Read cookie
     cookie_string, csrf_token = parse_cookie_json(cookie_file)
     if not cookie_string or not csrf_token:
-        print("Failed to parse cookie file. Exiting...")
         return
     
-    # 设置请求头
+    # Set request headers
     headers = {
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
         'authorization': 'Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA',
@@ -699,17 +647,13 @@ def main():
         'x-csrf-token': csrf_token
     }
     
-    # 获取用户信息
+    # Get user info
     user_info = User_info(screen_name)
     if not get_user_info(user_info, headers):
         return
     
-    print_info(user_info)
-    
-    # 开始下载
+    # Start download
     asyncio.run(download_tweets(user_info, save_path, max_tweets, headers))
-    
-    print(f"\n下载完成！共处理 {max_tweets} 条推文")
 
 if __name__ == '__main__':
     main()
