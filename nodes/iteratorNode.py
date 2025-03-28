@@ -1,4 +1,4 @@
-from typing import Dict, Any, Generator, Iterable, Union, List, Set, Dict as DictType
+from typing import Dict, Any, AsyncGenerator, Iterable, Union, List, Set, Dict as DictType
 from autotask.nodes import GeneratorNode, register_node
 
 @register_node
@@ -33,7 +33,7 @@ class IteratorNode(GeneratorNode):
     
     CATEGORY = "Flow Control"
 
-    def execute(self, node_inputs: Dict[str, Any], workflow_logger=None) -> Generator:
+    async def execute(self, node_inputs: Dict[str, Any], workflow_logger=None) -> AsyncGenerator[Any, None]:
         log = workflow_logger
         try:
             iterable = node_inputs["iterable"]

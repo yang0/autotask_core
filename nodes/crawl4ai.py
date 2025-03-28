@@ -19,7 +19,7 @@ except ImportError:
         BYPASS = "bypass"
 
 import asyncio
-from typing import Dict, Any, Generator, List, Optional
+from typing import Dict, Any, Generator, List, Optional, AsyncGenerator
 
 class BaseCrawlerNode:
     """Base class for all crawler nodes"""
@@ -189,7 +189,7 @@ class MultiWebCrawlerNode(GeneratorNode, BaseCrawlerNode):
         GeneratorNode.__init__(self)
         BaseCrawlerNode.__init__(self)
     
-    def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> Generator:
+    async def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> AsyncGenerator[Dict[str, Any], None]:
         try:
             urls_input = node_inputs.get("urls", "")
             max_length = node_inputs.get("max_length_per_url")
@@ -221,8 +221,7 @@ class MultiWebCrawlerNode(GeneratorNode, BaseCrawlerNode):
             for url in urls:
                 workflow_logger.info(f"Crawling URL: {url}")
                 try:
-                    # Create a new event loop for async operation within sync context
-                    content = asyncio.run(self._crawl_url(url, max_length, cache_mode))
+                    content = await self._crawl_url(url, max_length, cache_mode)
                     workflow_logger.info(f"Successfully crawled {url}")
                     
                     yield {
@@ -386,6 +385,9 @@ class SearchEngineCrawlerNode(Node, BaseCrawlerNode):
                 "error_message": error_msg,
                 "results": []
             }
+
+
+
 
 
 if __name__ == "__main__":
