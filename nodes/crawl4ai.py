@@ -1,7 +1,7 @@
 import traceback
 try:
     from autotask.nodes import Node, GeneratorNode, register_node
-    from crawl4ai import AsyncWebCrawler, CacheMode
+    from crawl4ai import AsyncWebCrawler, CacheMode, CrawlerRunConfig
 except ImportError:
     traceback.print_exc()
     # Mock for development environment
@@ -21,18 +21,65 @@ except ImportError:
 import asyncio
 from typing import Dict, Any, Generator, List, Optional, AsyncGenerator
 
+
+JS_CODE="""
+        function scrollPage() {
+            window.scrollTo(0, document.body.scrollHeight);
+            return {
+                height: document.body.scrollHeight,
+                scrolled: true
+            };
+        }
+        return scrollPage();
+    """
+
+
 class BaseCrawlerNode:
     """Base class for all crawler nodes"""
     _crawler_instance = None
     _crawler_lock = asyncio.Lock()
+    _current_config = None
 
     @classmethod
-    async def get_crawler(cls):
+    async def get_crawler(cls, cookie_file=None, headless=True):
         """获取或创建 AsyncWebCrawler 实例"""
         async with cls._crawler_lock:
-            if cls._crawler_instance is None:
-                cls._crawler_instance = AsyncWebCrawler(thread_safe=True)
+            # 检查是否需要重新创建实例（配置发生变化）
+            new_config = (cookie_file, headless)
+            if cls._crawler_instance is None or cls._current_config != new_config:
+                # 创建浏览器配置
+                browser_config = None
+                if cookie_file or headless is not None:
+                    from crawl4ai import BrowserConfig
+                    import json
+
+                    # 加载 cookies
+                    cookies = None
+                    if cookie_file:
+                        try:
+                            with open(cookie_file, 'r') as f:
+                                cookie_data = json.load(f)
+                                # 处理两种格式的 cookie 文件
+                                if isinstance(cookie_data, list):
+                                    cookies = cookie_data
+                                elif isinstance(cookie_data, dict) and 'cookies' in cookie_data:
+                                    cookies = cookie_data['cookies']
+                        except Exception as e:
+                            print(f"Failed to load cookies from file: {str(e)}")
+
+                    browser_config = BrowserConfig(
+                        cookies=cookies,
+                        headless=headless
+                    )
+
+                # 创建新的 crawler 实例
+                if cls._crawler_instance:
+                    await cls._crawler_instance.close()
+                cls._crawler_instance = AsyncWebCrawler(config=browser_config, thread_safe=True)
+                
                 await cls._crawler_instance.start()
+                cls._current_config = new_config
+
             return cls._crawler_instance
 
 @register_node
@@ -60,6 +107,19 @@ class WebCrawlerNode(Node, BaseCrawlerNode):
             "type": "BOOLEAN",
             "default": False,
             "required": False,
+        },
+        "cookie_file": {
+            "label": "Cookie File",
+            "description": "Path to a JSON file containing cookies to load",
+            "type": "STRING",
+            "required": False,
+        },
+        "headless": {
+            "label": "Headless Mode",
+            "description": "Whether to run the browser in headless mode (no GUI)",
+            "type": "BOOLEAN",
+            "default": True,
+            "required": False,
         }
     }
     
@@ -86,10 +146,13 @@ class WebCrawlerNode(Node, BaseCrawlerNode):
         BaseCrawlerNode.__init__(self)
     
     async def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> Dict[str, Any]:
+        global JS_CODE
         try:
             url = node_inputs.get("url")
             max_length = node_inputs.get("max_length")
             use_cache = node_inputs.get("use_cache", False)
+            cookie_file = node_inputs.get("cookie_file")
+            headless = node_inputs.get("headless", True)
             
             if not url:
                 workflow_logger.error("No URL provided")
@@ -101,9 +164,27 @@ class WebCrawlerNode(Node, BaseCrawlerNode):
             
             workflow_logger.info(f"Starting web crawling for: {url}")
             
-
-            crawler = await self.get_crawler()
-            result = await crawler.arun(url=url, cache_mode=CacheMode.BYPASS if not use_cache else None)
+            # 获取配置好的 crawler 实例
+            crawler = await self.get_crawler(cookie_file=cookie_file, headless=headless)
+            crawler_config = CrawlerRunConfig(
+                    wait_until="load",  # 等待网络请求完成
+                    # 可选值:
+                    # - "domcontentloaded": 等待 DOMContentLoaded 事件
+                    # - "load": 等待 load 事件
+                    # - "networkidle": 等待网络请求完成（最严格）
+                    # - "commit": 等待页面开始接收响应
+                    # js_code=JS_CODE,
+                    # js_only=False,
+                    scan_full_page=True,  # 自动滚动页面以加载懒加载内容
+                    scroll_delay=0.5,  # 滚动间隔时间
+                    page_timeout=30000,
+                    verbose=True
+                )
+            result = await crawler.arun(
+                url=url, 
+                cache_mode=CacheMode.BYPASS if not use_cache else None,
+                config=crawler_config
+                )
             
             if not result.markdown:
                 workflow_logger.warning(f"No content found for {url}")
@@ -159,6 +240,19 @@ class MultiWebCrawlerNode(GeneratorNode, BaseCrawlerNode):
             "type": "BOOLEAN",
             "default": False,
             "required": False,
+        },
+        "cookie_file": {
+            "label": "Cookie File",
+            "description": "Path to a JSON file containing cookies to load",
+            "type": "STRING",
+            "required": False,
+        },
+        "headless": {
+            "label": "Headless Mode",
+            "description": "Whether to run the browser in headless mode (no GUI)",
+            "type": "BOOLEAN",
+            "default": True,
+            "required": False,
         }
     }
     
@@ -194,6 +288,8 @@ class MultiWebCrawlerNode(GeneratorNode, BaseCrawlerNode):
             urls_input = node_inputs.get("urls", "")
             max_length = node_inputs.get("max_length_per_url")
             use_cache = node_inputs.get("use_cache", False)
+            cookie_file = node_inputs.get("cookie_file")
+            headless = node_inputs.get("headless", True)
             
             # Parse URLs (handle both comma-separated string or list)
             urls = []
@@ -213,6 +309,9 @@ class MultiWebCrawlerNode(GeneratorNode, BaseCrawlerNode):
                 return
             
             workflow_logger.info(f"Starting multi-URL crawling for {len(urls)} URLs")
+            
+            # 获取配置好的 crawler 实例
+            crawler = await self.get_crawler(cookie_file=cookie_file, headless=headless)
             
             # Determine cache mode
             cache_mode = CacheMode.BYPASS if not use_cache else None

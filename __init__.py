@@ -1,3 +1,4 @@
+from .nodes.basic import *
 from .nodes.iteratorNode import *
 from .nodes.assistant import *
 # from .nodes.duckduckgo import *
@@ -16,7 +17,7 @@ from .reader.text_reader import *
 from .assistants.default_assistant import *
 from .nodes.browser_user import *
 from .nodes.crawl4ai import *
-
+from .nodes.x_free import *
 # from .nodes import *
 # from .documentLoader.jsonlLoader import *
 # from .documentLoader.largeTextLoader import *
