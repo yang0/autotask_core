@@ -11,14 +11,24 @@ from .assistants.default_assistant import *
 VERSION = "0.0.44"
 GIT_URL = "https://github.com/yang0/autotask_core.git"
 NAME = "AutoTask Core"
-DESCRIPTION = """Core plugin for AutoTask that provides essential AI agent features including:
+DESCRIPTION = """Core plugin for AutoTask that provides essential components for building AI-powered automation systems:
 
-• Simple Text Agent - A basic LLM-powered agent for text processing and interaction
-• Agent Node - A workflow node for integrating AI agents into your automation flows
-• Support for multiple LLM models
-• Function calling capabilities
-• Configurable agent parameters
+• Workflow Nodes
+  - Flow Control: Iterator and Boolean Condition nodes
+  - Time Operations: Current Time and Time Difference nodes
+  - File System: Read, Write, List, Delete, and Info nodes
+  - AI Integration: Assistant node for LLM interaction
 
-This plugin serves as a foundation for building AI-powered automation workflows."""
+• Knowledge Base Components
+  - Text Reader: Intelligent document processing with multi-format support
+  - Embedding Models: Vector embedding for knowledge base construction
+  - Advanced Text Chunking: Smart document splitting for optimal processing
 
-TAGS = ["agent", "core", "AI Assistant"]
+• AI Assistant Framework
+  - Base Assistant Classes: Foundation for building custom AI assistants
+  - LLM Integration: Support for multiple language models
+  - Function Calling: Extensible function execution framework
+
+This plugin provides the core building blocks for creating sophisticated AI-powered automation systems."""
+
+TAGS = ["core", "workflow", "embedding", "knowledge-base", "ai-assistant"]

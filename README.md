@@ -1,42 +1,33 @@
 # AutoTask Core Plugin
 
-Core plugin for AutoTask that provides essential automation features.
+Core plugin providing essential components for AutoTask:
 
-## Node Types
+## Components
 
-### Environment Key to Value Node
-A node that converts environment keys to their corresponding values:
+### nodes/
+Workflow nodes for automation:
+- Iterator and Boolean condition nodes for flow control
+- Time operation nodes for time handling
+- File operation nodes for file system tasks
+- Assistant node for LLM interaction
 
-- **Inputs**: 
-  - Environment Key 1 (Required)
-  - Environment Key 2 (Optional)
-  - Environment Key 3 (Optional)
-  - All keys are selected from dropdown list
+### embedder/
+Embedding model integration classes:
+- Vector embedding generation
+- Multiple model support
+- Knowledge base construction utilities
 
-- **Outputs**: 
-  - Environment Value 1
-  - Environment Value 2
-  - Environment Value 3
+### reader/
+Document readers for knowledge base construction:
+- Support formats: TXT, MD, CSV, JSON, XML, HTML, LOG
+- Smart text chunking
+- Metadata extraction
+- Format-specific handlers
 
-- **Features**:
-  - Dynamic loading of environment options
-  - Supports up to 3 key-value conversions
-  - Handles missing values gracefully
-  - Uses relative path for configuration
+### assistants/
+Base classes for building AI assistants:
+- Assistant framework
+- LLM integration
+- Function calling system
 
-## Configuration
 
-The plugin requires an `env.json` file in the `config` directory with the following structure:
-```json
-[
-  {
-    "key": "ENV_KEY",
-    "value": "env_value",
-    "showValue": true
-  }
-]
-```
-
-The configuration file is automatically loaded from the relative path: `../config/env.json`
-
-AutoTask.dev User Id: NazgSJb5PTeueSxSEGbaxT
