@@ -4,6 +4,8 @@ from .nodes.assistant import *
 from .nodes.time import *
 from .embedder import *
 from .reader.text_reader import *
+from .reader.pdf_reader import *
+from .reader.word_reader import *
 from .assistants.default_assistant import *
 
 
