@@ -64,7 +64,10 @@ class IteratorNode(GeneratorNode):
                     continue
                     
                 log.debug(f"Processing item at index {index}")
-                yield item
+                yield {
+                    "success": True,
+                    "item": item
+                }
                 
             log.info("Iteration completed successfully")
             
