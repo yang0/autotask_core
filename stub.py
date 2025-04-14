@@ -41,7 +41,7 @@ class GeneratorNode(Node):
         return True
     
     @abstractmethod
-    def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> Generator:
+    async def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> Generator:
         """
         Execute the generator node
         
