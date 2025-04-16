@@ -20,6 +20,13 @@ class IteratorNode(GeneratorNode):
             "type": "BOOLEAN",
             "required": False,
             "default": True
+        },
+        "max_iterations": {
+            "label": "Maximum Iterations",
+            "description": "Maximum number of iterations (0 for unlimited)",
+            "type": "INT",
+            "required": False,
+            "default": 0
         }
     }
     
@@ -38,6 +45,7 @@ class IteratorNode(GeneratorNode):
         try:
             iterable = node_inputs["iterable"]
             skip_none = node_inputs.get("skip_none", True)
+            max_iterations = node_inputs.get("max_iterations", 0)
             
             # Handle string input by splitting on newlines
             if isinstance(iterable, str):
@@ -58,7 +66,12 @@ class IteratorNode(GeneratorNode):
             else:
                 items = enumerate(iterable)
             
+            iteration_count = 0
             for index, item in items:
+                if max_iterations > 0 and iteration_count >= max_iterations:
+                    log.info(f"Reached maximum iteration count: {max_iterations}")
+                    break
+                    
                 if skip_none and item is None:
                     log.debug(f"Skipping None value at index {index}")
                     continue
@@ -68,6 +81,7 @@ class IteratorNode(GeneratorNode):
                     "success": True,
                     "item": item
                 }
+                iteration_count += 1
                 
             log.info("Iteration completed successfully")
             

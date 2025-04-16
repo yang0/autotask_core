@@ -10,7 +10,7 @@ from .assistants.default_assistant import *
 
 
 
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 GIT_URL = "https://github.com/yang0/autotask_core.git"
 NAME = "AutoTask Core"
 DESCRIPTION = """Core plugin for AutoTask that provides essential components for building AI-powered automation systems:
