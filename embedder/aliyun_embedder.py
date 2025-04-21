@@ -3,6 +3,7 @@ from autotask.embedder.embedder_registry import EmbedderRegistry
 import os
 from typing import Dict, List, Optional, Tuple
 from openai import OpenAI
+import traceback
 
 @EmbedderRegistry.register_embedder
 class AliyunEmbedder(BaseEmbedder):
@@ -52,6 +53,7 @@ class AliyunEmbedder(BaseEmbedder):
             return embedding, usage
             
         except Exception as e:
+            traceback.print_exc()
             raise Exception(f"阿里云API请求失败: {str(e)}")
     
     def get_batch_embeddings(self, texts: List[str]) -> List[List[float]]:
