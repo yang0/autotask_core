@@ -1,12 +1,32 @@
+import time
+print(f"[CoreInit] Start __init__.py at {time.time()}")
+print(f"[CoreInit] Before import basic at {time.time()}")
 from .nodes.basic import *
+print(f"[CoreInit] After import basic at {time.time()}")
+print(f"[CoreInit] Before import iteratorNode at {time.time()}")
 from .nodes.iteratorNode import *
+print(f"[CoreInit] After import iteratorNode at {time.time()}")
+print(f"[CoreInit] Before import assistant at {time.time()}")
 from .nodes.assistant import *
+print(f"[CoreInit] After import assistant at {time.time()}")
+print(f"[CoreInit] Before import time at {time.time()}")
 from .nodes.time import *
+print(f"[CoreInit] After import time at {time.time()}")
+print(f"[CoreInit] Before import embedder at {time.time()}")
 from .embedder import *
+print(f"[CoreInit] After import embedder at {time.time()}")
+print(f"[CoreInit] Before import text_reader at {time.time()}")
 from .reader.text_reader import *
+print(f"[CoreInit] After import text_reader at {time.time()}")
+print(f"[CoreInit] Before import pdf_reader at {time.time()}")
 from .reader.pdf_reader import *
+print(f"[CoreInit] After import pdf_reader at {time.time()}")
+print(f"[CoreInit] Before import word_reader at {time.time()}")
 from .reader.word_reader import *
+print(f"[CoreInit] After import word_reader at {time.time()}")
+print(f"[CoreInit] Before import default_assistant at {time.time()}")
 from .assistants.default_assistant import *
+print(f"[CoreInit] After import default_assistant at {time.time()}")
 
 
 

@@ -44,8 +44,8 @@ class DefaultAssistant(GraphAssistant):
         self.main_llm_config = main_agent_config
         self.reasoning_llm_config = reasoning_agent_config
         
-    async def main_agent_node(self, state: State):
-        """主agent节点处理函数"""
+    async def main_agent_node(self, state: 'State'):
+        from langchain_core.messages import SystemMessage, AIMessage
         if state.should_stop:
             return {"messages": [AIMessage(content="task is stopped by user")]}
         messages = [SystemMessage(content=self.main_agent_config.system_message)] + state.messages
@@ -53,8 +53,8 @@ class DefaultAssistant(GraphAssistant):
         response = await self.main_llm.ainvoke(messages)
         return {"messages": [response]}
         
-    async def reasoning_agent_node(self, state: State):
-        """推理agent节点处理函数"""
+    async def reasoning_agent_node(self, state: 'State'):
+        from langchain_core.messages import SystemMessage, AIMessage
         if state.should_stop:
             return {"messages": [AIMessage(content="task is stopped by user")]}
         messages = [SystemMessage(content=self.reasoning_agent_config.system_message)] + state.messages
@@ -63,15 +63,12 @@ class DefaultAssistant(GraphAssistant):
         return {"messages": [response]}
 
     def build(self):
-        """构建工作流图"""
         from .builders.basic_graph_builder import BasicGraphBuilder
         from .builders.team_graph_builder import TeamGraphBuilder
-        
         if self.team and len(self.team) > 0:
             builder = TeamGraphBuilder(self)
         else:
             builder = BasicGraphBuilder(self)
-        
         return builder.build()
 
 

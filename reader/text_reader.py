@@ -9,12 +9,24 @@ from autotask.document.reader.reader_registry import ReaderRegistry
 from autotask.utils.log import logger
 
 # Import RecursiveChunker
-try:
-    from chonkie import RecursiveChunker, RecursiveRules
-    CHONKIE_AVAILABLE = True
-except ImportError:
-    logger.warning("Chonkie library not installed. Smart chunking will be disabled. Install with: pip install chonkie")
-    CHONKIE_AVAILABLE = False
+CHONKIE_AVAILABLE = None
+
+def _get_chunker():
+    global CHONKIE_AVAILABLE
+    if CHONKIE_AVAILABLE is None:
+        try:
+            from chonkie import RecursiveChunker, RecursiveRules
+            CHONKIE_AVAILABLE = True
+            return RecursiveChunker, RecursiveRules
+        except ImportError:
+            CHONKIE_AVAILABLE = False
+            logger.warning("Chonkie library not installed. Smart chunking will be disabled. Install with: pip install chonkie")
+            return None, None
+    elif CHONKIE_AVAILABLE:
+        from chonkie import RecursiveChunker, RecursiveRules
+        return RecursiveChunker, RecursiveRules
+    else:
+        return None, None
 
 
 @ReaderRegistry.register_reader([".txt", ".md", ".csv", ".json", ".xml", ".html", ".log"])
@@ -113,7 +125,8 @@ class TextReader(FileReader):
                 }
             
             # Check content length, don't chunk small texts
-            if len(content) < 1000 or not CHONKIE_AVAILABLE:
+            RecursiveChunker, RecursiveRules = _get_chunker()
+            if len(content) < 1000 or not RecursiveChunker:
                 # For short content, create single Document object
                 document = Document(
                     id=str(file_path),

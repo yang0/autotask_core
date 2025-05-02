@@ -2,7 +2,6 @@ from autotask.embedder.base_embedder import BaseEmbedder
 from autotask.embedder.embedder_registry import EmbedderRegistry
 import os
 from typing import Dict, List, Optional, Tuple
-from openai import OpenAI
 import traceback
 
 @EmbedderRegistry.register_embedder
@@ -26,8 +25,8 @@ class AliyunEmbedder(BaseEmbedder):
         """获取文本嵌入向量和使用情况"""
         if not self.api_key:
             raise ValueError("API密钥未设置，请提供api_key参数或设置DASHSCOPE_API_KEY环境变量")
-        
-        # 创建OpenAI客户端，使用阿里云兼容端点
+        # lazy import openai
+        from openai import OpenAI
         client = OpenAI(
             api_key=self.api_key,
             base_url=self.api_url
@@ -60,8 +59,8 @@ class AliyunEmbedder(BaseEmbedder):
         """批量获取文本嵌入向量"""
         if not self.api_key:
             raise ValueError("API密钥未设置，请提供api_key参数或设置DASHSCOPE_API_KEY环境变量")
-        
-        # 创建OpenAI客户端，使用阿里云兼容端点
+        # lazy import openai
+        from openai import OpenAI
         client = OpenAI(
             api_key=self.api_key,
             base_url=self.api_url
