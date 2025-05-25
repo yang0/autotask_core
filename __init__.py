@@ -14,19 +14,12 @@ from .nodes.time import *
 print(f"[CoreInit] After import time at {time.time()}")
 print(f"[CoreInit] Before import embedder at {time.time()}")
 from .embedder import *
-print(f"[CoreInit] After import embedder at {time.time()}")
-print(f"[CoreInit] Before import text_reader at {time.time()}")
 from .reader.text_reader import *
-print(f"[CoreInit] After import text_reader at {time.time()}")
-print(f"[CoreInit] Before import pdf_reader at {time.time()}")
 from .reader.pdf_reader import *
-print(f"[CoreInit] After import pdf_reader at {time.time()}")
-print(f"[CoreInit] Before import word_reader at {time.time()}")
 from .reader.word_reader import *
-print(f"[CoreInit] After import word_reader at {time.time()}")
-print(f"[CoreInit] Before import default_assistant at {time.time()}")
-from .assistants.default_assistant import *
-print(f"[CoreInit] After import default_assistant at {time.time()}")
+from .assistants.low.reAct_assistant import *
+from .assistants.high.default_assistant import *
+from .assistants.high.research.research_assistant import *
 
 
 

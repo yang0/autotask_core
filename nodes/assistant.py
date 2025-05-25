@@ -22,8 +22,7 @@ class AssistantNode(Node):
             "label": "Assistant",
             "description": "Select the assistant to process the input",
             "type": "ASSISTANT",
-            "required": True,
-            "options": assistant_config_manager().get_hierarchical_assistant_configs(),
+            "required": True
         },
         "input_text": {
             "label": "Input Text",
