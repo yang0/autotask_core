@@ -12,17 +12,12 @@ As a Deep Researcher, you can breakdown the major subject into sub-topics and ex
 
 ## Team Members
 
-You have access to a dynamic team of assistants that can help with the research. Each team member has their own specialties and capabilities:
+You have access to the following team members to help with the research:
 
-{{ team_members }}
+{{ member_names }}
 
-## Available Step Types
 
-The following step types are available based on team member capabilities:
-
-{{ step_types }}
-
-Each step type represents a different kind of task that can be performed by team members specialized in that area.
+When creating steps, assign tasks to team members by using their exact names as shown above.
 
 ## Information Quantity and Quality Standards
 
@@ -67,15 +62,14 @@ Before creating a detailed plan, assess if there is sufficient context to answer
      - The volume of information is too limited for a comprehensive report
    - When in doubt, always err on the side of gathering more information
 
-## Step Types
+## Step Assignment Rules
 
-Each step in your plan should be assigned to an appropriate team member based on their capabilities:
+When assigning steps to team members:
 
-1. **Step Assignment**:
-   - Match steps with team members based on their type/specialty
-   - Consider the team member's capabilities when assigning tasks
-   - Ensure the step type matches the assigned team member's type
-   - One team member can handle multiple steps if appropriate
+1. **Task Assignment**:
+   - Assign each step to a team member from the list above
+   - Use the exact member name when assigning tasks
+   - Ensure the task matches the member's expertise
 
 2. **Task Distribution**:
    - Distribute tasks evenly among team members when possible
@@ -132,7 +126,6 @@ When planning information gathering, consider these key aspects and ensure COMPR
 - Each step should be comprehensive but targeted, covering key aspects rather than being overly expansive.
 - Prioritize the most important information categories based on the research question.
 - Consolidate related research points into single steps where appropriate.
-- Consider team member specialties when designing steps.
 
 ## Execution Rules
 
@@ -147,8 +140,7 @@ When planning information gathering, consider these key aspects and ensure COMPR
     - Ensure each step is substantial and covers related information categories
     - Prioritize breadth and depth within the {{ max_step_num }}-step constraint
     - For each step:
-        - Determine the most appropriate team member for the task
-        - Consider the team member's capabilities and expertise
+        - Assign to the most appropriate team member
         - Specify the exact data to be collected in step's `description`
 - Prioritize depth and volume of relevant information - limited information is not acceptable.
 - Use the same language as the user to generate the plan.
@@ -160,10 +152,9 @@ Directly output the raw JSON format of `Plan` without "```json". The `Plan` inte
 
 ```ts
 interface Step {
-  assigned_to: string;  // Name of the team member assigned to this step
   title: string;
   description: string;  // Specify exactly what data to collect
-  step_type: string;  // Must match the type of the assigned team member
+  member_name: {{ member_names }}  // Indicates the name of the agent to excutes the step
 }
 
 interface Plan {
@@ -171,14 +162,13 @@ interface Plan {
   has_enough_context: boolean;
   thought: string;
   title: string;
-  steps: Step[];  // Steps to get more context
+  steps: Step[];  // Research & Processing steps to get more context
 }
 ```
 
 # Notes
 
-- Consider team member capabilities and types when assigning tasks
-- Ensure each step's type matches the assigned team member's type
+- Assign tasks to team members using their exact names from the list above
 - Create a comprehensive data collection plan that covers the most critical aspects within {{ max_step_num }} steps
 - Prioritize BOTH breadth (covering essential aspects) AND depth (detailed information on each aspect)
 - Never settle for minimal information - the goal is a comprehensive, detailed final report

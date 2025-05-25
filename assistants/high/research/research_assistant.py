@@ -1,6 +1,7 @@
 from langgraph.graph import StateGraph, START, END
 import logging
 from typing import Dict, Set
+from langgraph.checkpoint.memory import MemorySaver
 
 from autotask.assistant.graph_assistant import GraphAssistant
 from autotask.assistant.assistant_registry import AssistantRegistry
@@ -10,12 +11,13 @@ from .types import State
 import traceback
 try:
     from .nodes import (
-        coordinator_node,
+        create_coordinator_node,
+        create_planner_node,
+        create_reporter_node,
         background_investigation_node,
-        planner_node,
         human_feedback_node,
         research_team_node,
-        reporter_node,
+        _execute_agent_step,
     )
 except Exception as e:
     traceback.print_exc()
@@ -58,37 +60,37 @@ class ResearchAssistant(GraphAssistant):
         # Add edge from START to coordinator first
         builder.add_edge(START, "coordinator")
         
+        # Create node functions with injected dependencies
+        coordinator = create_coordinator_node(self.main_llm)
+        planner = create_planner_node(self.main_llm, self.reasoning_llm)
+        reporter = create_reporter_node(self.main_llm)
+        
         # Add core nodes
-        builder.add_node("coordinator", coordinator_node)
+        builder.add_node("coordinator", coordinator)
         builder.add_node("background_investigator", background_investigation_node)
-        builder.add_node("planner", planner_node)
-        builder.add_node("reporter", reporter_node)
+        builder.add_node("planner", planner)
+        builder.add_node("reporter", reporter)
         builder.add_node("research_team", research_team_node)
         builder.add_node("human_feedback", human_feedback_node)
         
         # Add team members and collect their types
-        team_members = {}
-        step_types = set()
         for member in self.team:
             graph = get_graph(member)
             assistant_config = assistant_config_manager().get_assistant_config(member)
             assistant_name = assistant_config.name
-            member_type = assistant_config.type or "research"  # Default to research if type not specified
-            team_members[assistant_name] = member_type
-            step_types.add(member_type)
-            builder.add_node(assistant_name, graph)
             
+            # Create a wrapper function that uses _execute_agent_step
+            def create_agent_node(agent=graph, agent_name=assistant_name):
+                async def agent_node(state: State):
+                    return await _execute_agent_step(state, agent, agent_name)
+                return agent_node
+            builder.add_node(assistant_name, create_agent_node())
+                       
         # Add edge to END
         builder.add_edge("reporter", END)
         
-        # Update initial state with team members, step types and LLMs
-        initial_state = {
-            "team_members": team_members,
-            "step_types": step_types,
-            "main_llm": self.main_llm,  # Add main LLM to state
-            "reasoning_llm": self.reasoning_llm  # Add reasoning LLM to state
-        }
+        memory = MemorySaver()
         
-        return builder.compile(initial_state=initial_state)
+        return builder.compile(checkpointer=memory)
 
 

@@ -34,7 +34,7 @@ def get_prompt_template(prompt_name: str) -> str:
 
 
 def apply_prompt_template(
-    prompt_name: str, state: AgentState
+    prompt_name: str, state: AgentState, assistant_config_params: dict = None
 ) -> list:
     """
     Apply template variables to a prompt template and return formatted messages.
@@ -52,6 +52,9 @@ def apply_prompt_template(
         **state,
     }
 
+    # Add configurable variables
+    if assistant_config_params:
+        state_vars.update(assistant_config_params)
 
     try:
         template = env.get_template(f"{prompt_name}.md")

@@ -25,24 +25,6 @@ class TeamRouter(TypedDict):
 )
 class DefaultAssistant(GraphAssistant):
     
-    def __init__(self,
-                 id: str,
-                 name: str,
-                 description: str,
-                 main_agent_config: Dict[str, Any],  # 修改为字典类型
-                 reasoning_agent_config: Optional[Dict[str, Any]] = None,  # 修改为字典类型
-                 enable_reasoning: bool = True,
-                 max_steps: int = 5,
-                 team: List[str] = None,
-                 config: Dict[str, Any] = None,
-                 class_path: str = "",
-                 knowledge_bases: Optional[List[Dict[str, Any]]] = None):
-        super().__init__(id, name, description, main_agent_config, reasoning_agent_config, 
-                        enable_reasoning, max_steps, team, config, class_path, knowledge_bases)
-        
-        # 初始化LLM配置
-        self.main_llm_config = main_agent_config
-        self.reasoning_llm_config = reasoning_agent_config
         
     async def main_agent_node(self, state: 'State'):
         from langchain_core.messages import SystemMessage, AIMessage
